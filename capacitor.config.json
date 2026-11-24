@@ -1,0 +1,11 @@
+{
+  "appId": "com.skat.vibenring",
+  "appName": "Viben Ring",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "build": "node scripts/cap-copy-www.js",
+    "sync:android": "npx cap sync android",
     "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/core": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.0"
   }
 }

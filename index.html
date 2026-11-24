@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Viben Ring · 智能戒指战术竞技场</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0f17;
+      color: #e8e2d0;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+    #hud {
+      width: min(94vw, 520px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #3d3522;
+      background: #181a24;
+      color: #d4af37;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    canvas {
+      width: min(94vw, 520px);
+      height: min(68vh, 520px);
+      background: #131726;
+      border: 1px solid #2e3348;
+      border-radius: 12px;
+    }
+    #controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #c9a227;
+      background: #231d12;
+      color: #f3d778;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    @media (max-width: 280px), (max-height: 300px) {
+      #hud { font-size: 10px; padding: 4px 6px; }
+      .badge { font-size: 9px; padding: 2px 6px; }
+      button { padding: 4px 8px; font-size: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <span id="status">对峙距离演练 · 治疗会触发突刺</span>
+    <button id="wearable-enable" class="badge" type="button">启用戒指/手杖</button>
+  </div>
+  <canvas id="arena" width="520" height="520"></canvas>
+  <div id="controls">
+    <button id="heal-btn" type="button">圣杯瓶治疗 (手杖敲击)</button>
+    <button id="dash-btn" type="button">翻滚闪避 (戒指摇晃)</button>
+  </div>
+  <script type="module" src="./wearable-input.js"></script>
+  <script type="module">
+    import { StalkerEnemy } from './src/entities/stalker-enemy.js';
+    import { emit } from './src/systems/game-events.js';
+
+    const canvas = document.getElementById('arena');
+    const ctx = canvas.getContext('2d');
+    const statusEl = document.getElementById('status');
+
+    const player = { x: 260, y: 340, vx: 0, vy: 0 };
+    const enemy = new StalkerEnemy(260, 160, { player });
+
+    function clampArena(ent) {
+      ent.x = Math.max(24, Math.min(496, ent.x));
+      ent.y = Math.max(24, Math.min(496, ent.y));
+    }
+
+    document.getElementById('heal-btn').addEventListener('click', () => {
+      emit('player:healed', { amount: 35 });
+      statusEl.textContent = '已饮用圣杯瓶 — 小心突刺！';
+    });
+
+    document.getElementById('dash-btn').addEventListener('click', () => {
+      player.x += (Math.random() > 0.5 ? 1 : -1) * 56;
+      clampArena(player);
+      statusEl.textContent = '侧向翻滚闪避！';
+    });
+
+    window.onWearableGesture = (gesture, detail = {}) => {
+      if (gesture === 'tilt') {
+        const step = 18;
+        if (detail.dir === 'left') player.x -= step;
+        if (detail.dir === 'right') player.x += step;
+        if (detail.dir === 'up') player.y -= step;
+        if (detail.dir === 'down') player.y += step;
+        clampArena(player);
+      } else if (gesture === 'tap') {
+        document.getElementById('heal-btn').click();
+      } else if (gesture === 'shake' || gesture === 'swing') {
+        document.getElementById('dash-btn').click();
+      }
+    };
+
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      enemy.update(dt);
+      clampArena(enemy);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.18)';
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, 140, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      ctx.arc(player.x, player.y, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = enemy.lunging ? '#f87171' : '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>

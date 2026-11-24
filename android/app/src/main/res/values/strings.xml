@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Viben Ring</string>
+    <string name="title_activity_main">Viben Ring</string>
+    <string name="package_name">com.skat.vibenring</string>
+    <string name="custom_url_scheme">com.skat.vibenring</string>
+</resources>
